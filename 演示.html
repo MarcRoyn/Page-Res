@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能问答系统展示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            width: 80%;
+            max-width: 700px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .input-box, .output-box {
+            margin-top: 20px;
+        }
+        .input-box textarea, .output-box textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            height: 100px;
+            resize: none;
+        }
+        .button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .loading-message {
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+            margin-top: 15px;
+            display: none;
+        }
+        .response-box {
+            margin-top: 20px;
+        }
+        .response-box p {
+            margin: 10px 0;
+        }
+        .model-selection {
+            font-size: 16px;
+            margin-top: 10px;
+            color: #555;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .model-response {
+            padding: 15px;
+            background-color: #e7f7e7;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        .language-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 16px;
+        }
+        .model-cards {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .model-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            width: 30%;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .model-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .model-card.selected {
+            background-color: #d4edda;
+        }
+        .model-card h4 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .model-card p {
+            margin-top: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Selector -->
+        <select id="languageSelector" class="language-selector" onchange="changeLanguage()">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+        </select>
+
+        <h1 id="pageTitle">智能问答系统</h1>
+
+        <div class="input-box">
+            <label for="question" id="questionLabel">请输入您的问题：</label>
+            <textarea id="question" placeholder="在这里输入您的问题..."></textarea>
+        </div>
+
+        <!-- Model Selection Section -->
+        <div class="model-cards">
+            <div class="model-card selected" id="autoSelect" onclick="selectModel('auto')">
+                <h4>自动推荐</h4>
+                <p>系统将自动选择最合适的模型。</p>
+            </div>
+            <div class="model-card" id="model1" onclick="selectModel('model1')">
+                <h4>模型1</h4>
+                <p>适用于一般问题解答。</p>
+            </div>
+            <div class="model-card" id="model2" onclick="selectModel('model2')">
+                <h4>模型2</h4>
+                <p>适用于技术类问题。</p>
+            </div>
+            <div class="model-card" id="model3" onclick="selectModel('model3')">
+                <h4>模型3</h4>
+                <p>适用于情感分析类问题。</p>
+            </div>
+        </div>
+
+        <button class="button" id="submitButton" onclick="simulateResponse()">提交问题</button>
+
+        <div class="loading-message" id="loadingMessage">正在选择合适的大模型并生成答案...</div>
+
+        <div class="response-box" id="responseBox" style="display: none;">
+            <div class="model-selection">
+                <strong id="modelLabel">系统选择的模型：</strong> GPT-4
+            </div>
+            <div class="model-response" id="modelResponse">
+                <strong id="answerLabel">回答：</strong> 这是一个示例回答，展示模型如何提供问题的解答。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedModel = 'auto';  // 默认选中“自动推荐”
+
+        // 更新模型选择状态
+        function selectModel(model) {
+            selectedModel = model;
+
+            // 清除所有卡片的选中状态
+            const cards = document.querySelectorAll('.model-card');
+            cards.forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // 设置选中卡片的样式
+            document.getElementById(model).classList.add('selected');
+        }
+
+        const translations = {
+            zh: {
+                pageTitle: "智能问答系统",
+                questionLabel: "请输入您的问题：",
+                submitButton: "提交问题",
+                loadingMessage: "正在选择合适的大模型并生成答案...",
+                modelLabel: "系统选择的模型：",
+                answerLabel: "回答：",
+                placeholder: "在这里输入您的问题..."
+            },
+            en: {
+                pageTitle: "Intelligent Q&A System",
+                questionLabel: "Please enter your question:",
+                submitButton: "Submit Question",
+                loadingMessage: "Selecting the appropriate model and generating the answer...",
+                modelLabel: "Model Selected by the System:",
+                answerLabel: "Answer:",
+                placeholder: "Enter your question here..."
+            },
+            fr: {
+                pageTitle: "Système de questions-réponses intelligent",
+                questionLabel: "Veuillez entrer votre question :",
+                submitButton: "Soumettre la question",
+                loadingMessage: "Sélection du modèle approprié et génération de la réponse...",
+                modelLabel: "Modèle sélectionné par le système :",
+                answerLabel: "Réponse :",
+                placeholder: "Entrez votre question ici..."
+            }
+        };
+
+        function changeLanguage() {
+            const lang = document.getElementById("languageSelector").value;
+            const translation = translations[lang];
+            
+            document.getElementById("pageTitle").innerText = translation.pageTitle;
+            document.getElementById("questionLabel").innerText = translation.questionLabel;
+            document.getElementById("submitButton").innerText = translation.submitButton;
+            document.getElementById("loadingMessage").innerText = translation.loadingMessage;
+            document.getElementById("modelLabel").innerText = translation.modelLabel;
+            document.getElementById("answerLabel").innerText = translation.answerLabel;
+            document.getElementById("question").placeholder = translation.placeholder;
+        }
+
+        function simulateResponse() {
+            // 显示加载提示
+            document.getElementById("loadingMessage").style.display = "block";
+            document.getElementById("responseBox").style.display = "none";
+
+            // 模拟加载过程
+            setTimeout(function() {
+                const modelText = selectedModel === 'auto' ? 'GPT-4 (自动推荐)' : selectedModel === 'model1' ? '模型1' : selectedModel === 'model2' ? '模型2' : '模型3';
+                document.getElementById("modelLabel").innerText = `系统选择的模型：${modelText}`;
+                document.getElementById("modelResponse").innerText = `回答：这是一个示例回答，展示模型如何提供问题的解答。`;
+
+                // 隐藏加载提示，显示结果
+                document.getElementById("loadingMessage").style.display = "none";
+                document.getElementById("responseBox").style.display = "block";
+            }, 2000); // 模拟延迟2秒
+        }
+    </script>
+</body>
+</html>
